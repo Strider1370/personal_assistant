@@ -1,0 +1,13 @@
+.env
+.env.raw-backup
+.code-review-graph/
+Obsidian_vault/
+
+assistant/node_modules/
+assistant/dist/
+assistant/data/*.db
+assistant/data/*.sqlite
+assistant/data/*.sqlite3
+
+C:/tmp/
+*.log

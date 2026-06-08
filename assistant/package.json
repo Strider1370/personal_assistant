@@ -1,0 +1,31 @@
+{
+  "name": "assistant",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "note:structure": "tsx src/jobs/run-lightweight-note.ts",
+    "notion:sync": "tsx src/jobs/run-notion-sync.ts",
+    "digest:dry-run": "tsx src/jobs/run-daily-digest-cli.ts --dry-run",
+    "digest:send": "tsx src/jobs/run-daily-digest-cli.ts",
+    "telegram:bot": "tsx src/jobs/run-telegram-bot.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
