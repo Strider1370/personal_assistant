@@ -38,11 +38,11 @@ export function parseAtomEntries(xml: string): ParsedFeedItem[] {
   return matches
     .map((match) => match[1])
     .map((block) => {
-      const linkMatch = block.match(/<link[^>]+href="([^"]+)"/i);
+      const linkMatch = block.match(/<link[^>]+href=(["'])(.*?)\1/i);
 
       return {
         title: matchTag(block, "title"),
-        url: linkMatch ? decodeXml(linkMatch[1]) : "",
+        url: linkMatch ? decodeXml(linkMatch[2]) : "",
         publishedAt: matchTag(block, "updated") || matchTag(block, "published")
       };
     })

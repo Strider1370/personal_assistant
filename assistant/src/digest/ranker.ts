@@ -5,6 +5,11 @@ export type DigestRanker = {
   rankCandidates(candidates: DigestItemCandidate[]): Promise<RankedDigestItem[]>;
 };
 
+const fallbackSummarySuffix = "관련 핵심 업데이트";
+const fallbackWhyItMatters = "원문을 직접 확인할 가치가 있는 업데이트입니다.";
+const fallbackUserRelevance = "AI 도구 학습 흐름과 맞닿아 있습니다.";
+const fallbackNextAction = "링크를 열어 핵심 내용을 확인하세요.";
+
 export function createHeuristicDigestRanker(): DigestRanker {
   return {
     async rankCandidates(candidates) {
@@ -13,10 +18,10 @@ export function createHeuristicDigestRanker(): DigestRanker {
         .map((candidate) => ({
           ...candidate,
           displayTitle: candidate.title,
-          summary: `${candidate.title} 관련 핵심 업데이트`,
-          whyItMatters: `${candidate.source} 소스에서 확인된 항목으로 검토 가치가 있습니다.`,
-          userRelevance: `${candidate.tags.join(", ") || "일반 AI 학습"} 관심사와 맞닿아 있습니다.`,
-          nextAction: `링크를 열어 원문을 확인하세요`
+          summary: `${candidate.title} ${fallbackSummarySuffix}`,
+          whyItMatters: fallbackWhyItMatters,
+          userRelevance: candidate.tags.join(", ") || fallbackUserRelevance,
+          nextAction: fallbackNextAction
         }));
     }
   };
@@ -83,22 +88,41 @@ export function createLlmDigestRanker(
             nextAction?: string;
           }>;
         };
-        const byId = new Map(parsed.items?.map((item) => [item.sourceId, item]) ?? []);
 
-        return candidates.map((candidate) => {
-          const ranked = byId.get(candidate.sourceId);
-          return {
+        const candidatesById = new Map(candidates.map((candidate) => [candidate.sourceId, candidate]));
+        const rankedIds = new Set<string>();
+        const rankedCandidates: RankedDigestItem[] = [];
+
+        for (const rankedItem of parsed.items ?? []) {
+          const candidate = candidatesById.get(rankedItem.sourceId);
+
+          if (!candidate) {
+            continue;
+          }
+
+          rankedIds.add(candidate.sourceId);
+          rankedCandidates.push({
             ...candidate,
-            displayTitle: ranked?.displayTitle ?? candidate.title,
-            summary: ranked?.summary ?? candidate.title,
-            whyItMatters:
-              ranked?.whyItMatters ?? `${candidate.source} 소스에서 확인된 항목으로 검토 가치가 있습니다.`,
-            userRelevance:
-              ranked?.userRelevance ??
-              `${candidate.tags.join(", ") || "일반 AI 학습"} 관심사와 맞닿아 있습니다.`,
-            nextAction: ranked?.nextAction ?? "링크를 열어 원문을 확인하세요"
-          };
-        });
+            displayTitle: rankedItem.displayTitle ?? candidate.title,
+            summary: rankedItem.summary,
+            whyItMatters: rankedItem.whyItMatters,
+            userRelevance: rankedItem.userRelevance,
+            nextAction: rankedItem.nextAction
+          });
+        }
+
+        const remainingCandidates = candidates
+          .filter((candidate) => !rankedIds.has(candidate.sourceId))
+          .map((candidate) => ({
+            ...candidate,
+            displayTitle: candidate.title,
+            summary: candidate.title,
+            whyItMatters: fallbackWhyItMatters,
+            userRelevance: candidate.tags.join(", ") || fallbackUserRelevance,
+            nextAction: fallbackNextAction
+          }));
+
+        return [...rankedCandidates, ...remainingCandidates];
       } catch {
         return createHeuristicDigestRanker().rankCandidates(candidates);
       }

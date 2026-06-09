@@ -42,19 +42,20 @@ export function createAnthropicBlogFetcher(fetchImpl: typeof fetch = fetch): Dig
 }
 
 function parseAnthropicNewsroom(html: string) {
-  const matches = [...html.matchAll(/href="(\/news\/[^"]+)"[^>]*>([^<]+)</gi)];
+  const matches = [...html.matchAll(/<a\b[^>]*href=(["'])(\/news\/[^"'?#\s<>]+)\1[^>]*>([\s\S]*?)<\/a>/gi)];
   const seen = new Set<string>();
 
   return matches
     .map((match) => ({
-      href: match[1],
-      title: decodeHtml(match[2].trim())
+      href: match[2],
+      title: extractAnchorTitle(match[3])
     }))
     .filter((item) => item.title.length > 0)
     .filter((item) => {
       if (seen.has(item.href)) {
         return false;
       }
+
       seen.add(item.href);
       return true;
     })
@@ -63,18 +64,25 @@ function parseAnthropicNewsroom(html: string) {
       const url = `https://www.anthropic.com${item.href}`;
 
       return {
-      source: "anthropic_blog" as const,
-      sourceId: url,
-      title: item.title,
-      url,
-      publishedAt: new Date().toISOString(),
-      reactionScore: 0,
-      sourceSignals: {
-        officialSource: true
-      },
-      tags: [...deriveDigestTags(`${item.title} ${url}`), "official"]
-    };
+        source: "anthropic_blog" as const,
+        sourceId: url,
+        title: item.title,
+        url,
+        publishedAt: new Date().toISOString(),
+        reactionScore: 0,
+        sourceSignals: {
+          officialSource: true
+        },
+        tags: [...deriveDigestTags(`${item.title} ${url}`), "official"]
+      };
     });
+}
+
+function extractAnchorTitle(anchorHtml: string): string {
+  const headingMatch = anchorHtml.match(/<(h[1-6]|strong)\b[^>]*>([\s\S]*?)<\/\1>/i);
+  const content = headingMatch ? headingMatch[2] : anchorHtml;
+
+  return decodeHtml(content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 }
 
 function decodeHtml(value: string): string {

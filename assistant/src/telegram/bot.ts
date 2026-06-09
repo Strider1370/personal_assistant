@@ -1,7 +1,8 @@
+import type { NoteStructureModelClient } from "../llm/model-client.js";
 import { renderStructuredNote } from "../notes/note-renderer.js";
 import { saveNoteMarkdown } from "../notes/note-writer.js";
 import type { AppConfig } from "../shared/config.js";
-import type { NoteStructureModelClient } from "../llm/model-client.js";
+import { createChatReply } from "./chat-reply.js";
 import type { TelegramMessageSender } from "./send-message.js";
 
 type FetchLike = typeof fetch;
@@ -66,7 +67,7 @@ async function handleUpdate(
     const rawInput = text.slice("/save ".length).trim();
 
     if (!rawInput) {
-      await sendMessageToChat(config, fetchImpl, "저장할 메모 내용을 `/save 내용` 형식으로 보내주세요.");
+      await sendMessageToChat(config, fetchImpl, "저장할 메모 내용은 `/save 내용` 형식으로 보내주세요.");
       return;
     }
 
@@ -82,12 +83,9 @@ async function handleUpdate(
     await sendMessageToChat(
       config,
       fetchImpl,
-      [
-        "메모 저장 완료.",
-        `제목: ${result.draft.title}`,
-        `파일: ${saved.filename}`,
-        `요약: ${result.draft.summary}`
-      ].join("\n")
+      ["메모 저장 완료.", `제목: ${result.draft.title}`, `파일: ${saved.filename}`, `요약: ${result.draft.summary}`].join(
+        "\n"
+      )
     );
     return;
   }
@@ -99,47 +97,6 @@ async function handleUpdate(
 
   const reply = await createChatReply(text, config, fetchImpl);
   await sendMessageToChat(config, fetchImpl, reply);
-}
-
-async function createChatReply(
-  userText: string,
-  config: AppConfig,
-  fetchImpl: FetchLike
-): Promise<string> {
-  const response = await fetchImpl(`${config.llmBaseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.llmApiKey}`
-    },
-    body: JSON.stringify({
-      model: config.llmModel,
-      enable_thinking: config.llmEnableThinking,
-      temperature: 0.4,
-      messages: [
-        {
-          role: "system",
-          content:
-            "당신은 한국어로만 답하는 개인 AI 비서다. 짧고 실용적으로 답한다. 필요하면 bullet 없이 2~5문장으로 답하라."
-        },
-        {
-          role: "user",
-          content: userText
-        }
-      ]
-    })
-  });
-
-  if (!response.ok) {
-    return `응답 생성에 실패했습니다. 상태 코드: ${response.status}`;
-  }
-
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string | null } }>;
-  };
-  const content = payload.choices?.[0]?.message?.content?.trim();
-
-  return content || "응답을 생성하지 못했습니다.";
 }
 
 async function getInitialOffset(config: AppConfig, fetchImpl: FetchLike): Promise<number> {
@@ -155,6 +112,7 @@ async function getUpdates(
 ): Promise<TelegramUpdate[]> {
   const url = new URL(`https://api.telegram.org/bot${config.telegramBotToken}/getUpdates`);
   url.searchParams.set("timeout", "25");
+
   if (typeof offset === "number") {
     url.searchParams.set("offset", String(offset));
   }
@@ -172,11 +130,7 @@ async function getUpdates(
   return payload.result ?? [];
 }
 
-async function sendMessageToChat(
-  config: AppConfig,
-  fetchImpl: FetchLike,
-  text: string
-) {
+async function sendMessageToChat(config: AppConfig, fetchImpl: FetchLike, text: string) {
   const response = await fetchImpl(`https://api.telegram.org/bot${config.telegramBotToken}/sendMessage`, {
     method: "POST",
     headers: {

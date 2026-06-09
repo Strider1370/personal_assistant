@@ -5,9 +5,10 @@ import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { createAssistantDatabase } from "../../src/db/sqlite.js";
-import { runDailyDigest } from "../../src/jobs/run-daily-digest.js";
+import { runDailyDigest, selectTopDigestItems } from "../../src/jobs/run-daily-digest.js";
 import type { DigestCandidateFetcher } from "../../src/ingest/types.js";
 import type { DigestRanker } from "../../src/digest/ranker.js";
+import type { RankedDigestItem } from "../../src/digest/types.js";
 
 const tempDirs: string[] = [];
 
@@ -22,6 +23,46 @@ afterEach(async () => {
 });
 
 describe("runDailyDigest", () => {
+  test("soft diversity prefers another nearby source after three items from one source", () => {
+    const ranked = [
+      rankedItem("gn-1", "geek_news"),
+      rankedItem("gn-2", "geek_news"),
+      rankedItem("gn-3", "geek_news"),
+      rankedItem("gn-4", "geek_news"),
+      rankedItem("gn-5", "geek_news"),
+      rankedItem("oa-1", "openai_blog"),
+      rankedItem("an-1", "anthropic_blog")
+    ];
+
+    const selected = selectTopDigestItems(ranked, {
+      limit: 5,
+      maxPerSourceBeforeDiversifying: 3,
+      lookaheadWindow: 3
+    });
+
+    expect(selected.map((item) => item.sourceId)).toEqual(["gn-1", "gn-2", "gn-3", "oa-1", "gn-4"]);
+  });
+
+  test("soft diversity does not force a weaker source when no nearby alternative exists", () => {
+    const ranked = [
+      rankedItem("gn-1", "geek_news"),
+      rankedItem("gn-2", "geek_news"),
+      rankedItem("gn-3", "geek_news"),
+      rankedItem("gn-4", "geek_news"),
+      rankedItem("gn-5", "geek_news"),
+      rankedItem("gn-6", "geek_news"),
+      rankedItem("oa-1", "openai_blog")
+    ];
+
+    const selected = selectTopDigestItems(ranked, {
+      limit: 5,
+      maxPerSourceBeforeDiversifying: 3,
+      lookaheadWindow: 2
+    });
+
+    expect(selected.map((item) => item.sourceId)).toEqual(["gn-1", "gn-2", "gn-3", "gn-4", "gn-5"]);
+  });
+
   test("builds a dry-run digest, skips already-sent items, and adds related notes", async () => {
     const dir = await makeTempDir();
     const db = createAssistantDatabase(path.join(dir, "assistant.db"));
@@ -120,3 +161,25 @@ describe("runDailyDigest", () => {
     db.close();
   });
 });
+
+function rankedItem(
+  sourceId: string,
+  source: RankedDigestItem["source"],
+  overrides?: Partial<RankedDigestItem>
+): RankedDigestItem {
+  return {
+    source,
+    sourceId,
+    title: sourceId,
+    url: `https://example.com/${sourceId}`,
+    publishedAt: "2026-06-09T00:00:00Z",
+    reactionScore: 0,
+    sourceSignals: source === "hacker_news" ? { hnPoints: 100, hnComments: 20 } : { officialSource: true },
+    tags: ["ai"],
+    summary: `${sourceId} summary`,
+    whyItMatters: `${sourceId} matters`,
+    userRelevance: `${sourceId} relevant`,
+    nextAction: `${sourceId} action`,
+    ...overrides
+  };
+}

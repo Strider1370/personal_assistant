@@ -88,6 +88,10 @@ export function isRelevantDigestCandidate(candidate: DigestItemCandidate): boole
     return false;
   }
 
+  if (candidate.sourceSignals.officialSource) {
+    return true;
+  }
+
   if (candidate.tags.some((tag) => ["ai", "agent", "tooling", "prompting", "official"].includes(tag))) {
     return true;
   }
