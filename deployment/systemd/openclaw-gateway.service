@@ -1,8 +1,7 @@
 [Unit]
 Description=OpenClaw Gateway (personal assistant)
 After=network-online.target assistant-api.service
-Wants=network-online.target
-Requires=assistant-api.service
+Wants=network-online.target assistant-api.service
 
 [Service]
 Type=simple
