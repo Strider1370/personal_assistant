@@ -76,12 +76,6 @@
       "assistant.structure_note",
       "assistant.health",
       "web_search"
-    ],
-    "web": {
-      "search": {
-        "enabled": true,
-        "provider": "parallel-free"
-      }
-    }
+    ]
   }
 }
