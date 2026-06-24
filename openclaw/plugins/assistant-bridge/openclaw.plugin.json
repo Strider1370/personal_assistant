@@ -1,0 +1,19 @@
+{
+  "id": "assistant-bridge",
+  "name": "Assistant Bridge",
+  "description": "Bridges OpenClaw tools to the existing assistant backend HTTP API.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "assistant.health",
+      "assistant.save_note",
+      "assistant.structure_note"
+    ]
+  }
+}

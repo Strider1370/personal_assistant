@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the personal assistant daily digest every morning
+
+[Timer]
+# 08:00 in the server's local time. Set the server TZ (or use OnCalendar with a
+# timezone suffix on systemd >= 252, e.g. "Asia/Seoul 08:00").
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

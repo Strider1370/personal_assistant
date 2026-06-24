@@ -9,5 +9,9 @@ assistant/data/*.db
 assistant/data/*.sqlite
 assistant/data/*.sqlite3
 
+openclaw/plugins/*/node_modules/
+openclaw/plugins/*/dist/
+openclaw/.state/
+
 C:/tmp/
 *.log

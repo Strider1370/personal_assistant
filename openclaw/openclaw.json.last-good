@@ -1,0 +1,81 @@
+{
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "bind": "loopback",
+    "auth": {
+      "mode": "none"
+    },
+    "controlUi": {
+      "enabled": false
+    }
+  },
+  "models": {
+    "pricing": {
+      "enabled": false
+    },
+    "providers": {
+      "alibaba": {
+        "api": "openai-completions",
+        "baseUrl": "${LLM_BASE_URL}",
+        "apiKey": "${LLM_API_KEY}",
+        "models": [
+          {
+            "id": "${LLM_MODEL}",
+            "name": "${LLM_MODEL}",
+            "input": [
+              "text"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "alibaba/${LLM_MODEL}"
+      },
+      "models": {
+        "alibaba/deepseek-v4-flash": {
+          "alias": "Alibaba LLM"
+        }
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "tg:${TELEGRAM_CHAT_ID}"
+      ],
+      "linkPreview": false
+    }
+  },
+  "plugins": {
+    "enabled": true,
+    "allow": [
+      "assistant-bridge"
+    ],
+    "load": {
+      "paths": [
+        "C:\\Users\\Jond Doe\\Desktop\\Project\\personal_assistant\\openclaw\\plugins\\assistant-bridge"
+      ]
+    },
+    "entries": {
+      "assistant-bridge": {
+        "enabled": true
+      }
+    }
+  },
+  "tools": {
+    "allow": [
+      "assistant.save_note",
+      "assistant.structure_note",
+      "assistant.health",
+      "web_search"
+    ]
+  }
+}

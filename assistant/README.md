@@ -73,3 +73,13 @@ Example `POST /notes/structure` body:
 - Duplicate filenames receive `-2`, `-3`, and so on.
 - Successful writes use temp-file then rename semantics.
 - SQLite state is stored in `ASSISTANT_DB_PATH`.
+
+## OpenClaw Boundary
+
+When OpenClaw migration is enabled, Telegram conversation and search move to OpenClaw.
+This backend remains the source of truth for:
+
+- Obsidian note writes
+- note structuring APIs
+- Notion sync
+- daily digest jobs

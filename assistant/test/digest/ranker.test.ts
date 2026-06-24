@@ -36,6 +36,49 @@ function makeCandidate(sourceId: string, title: string): DigestItemCandidate {
 }
 
 describe("createLlmDigestRanker", () => {
+  test("asks the LLM for a 6-10 sentence Korean summary", async () => {
+    let requestBody: unknown;
+    const ranker = createLlmDigestRanker(config, async (_url, init) => {
+      requestBody = JSON.parse(String(init?.body));
+
+      return new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  items: [
+                    {
+                      sourceId: "first",
+                      displayTitle: "첫 번째 항목",
+                      summary: "충분한 요약입니다.",
+                      whyItMatters: "internal",
+                      userRelevance: "internal",
+                      nextAction: "internal"
+                    }
+                  ]
+                })
+              }
+            }
+          ]
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    });
+
+    await ranker.rankCandidates([makeCandidate("first", "First item")]);
+
+    const systemPrompt = (requestBody as { messages: Array<{ content: string }> }).messages[0]?.content;
+    expect(systemPrompt).toContain("6-10 complete Korean sentences");
+    expect(systemPrompt).toContain("never more than 10 sentences");
+    expect(systemPrompt).toContain("Do not write a short one-line summary");
+  });
+
   test("returns items in the LLM-provided ranking order", async () => {
     const candidates = [
       makeCandidate("first", "First item"),

@@ -1,0 +1,21 @@
+[Unit]
+Description=Personal Assistant API (Fastify)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=junn1370
+WorkingDirectory=/home/junn1370/personal_assistant/assistant
+EnvironmentFile=/home/junn1370/personal_assistant/.env
+# Server runs Node via nvm (v24 has stable node:sqlite). Match the existing setup.
+Environment=PATH=/home/junn1370/.nvm/versions/node/v24.16.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=OBSIDIAN_VAULT_PATH=/home/junn1370/personal_assistant/Obsidian_vault
+Environment=ASSISTANT_DB_PATH=/home/junn1370/personal_assistant/assistant/data/assistant.db
+# Build once before enabling:  npm ci && npm run build
+ExecStart=/home/junn1370/.nvm/versions/node/v24.16.0/bin/node dist/src/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

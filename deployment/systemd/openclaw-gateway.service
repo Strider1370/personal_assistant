@@ -1,0 +1,24 @@
+[Unit]
+Description=OpenClaw Gateway (personal assistant)
+After=network-online.target assistant-api.service
+Wants=network-online.target
+Requires=assistant-api.service
+
+[Service]
+Type=simple
+User=junn1370
+WorkingDirectory=/home/junn1370/personal_assistant/openclaw
+EnvironmentFile=/home/junn1370/personal_assistant/.env
+Environment=HOME=/home/junn1370
+# openclaw bin has a `#!/usr/bin/env node` shebang -> needs nvm node on PATH.
+Environment=PATH=/home/junn1370/.nvm/versions/node/v24.16.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=ASSISTANT_BASE_URL=http://127.0.0.1:3010
+# Server config: plugin path is the GCP absolute path (committed in the repo).
+Environment=OPENCLAW_CONFIG_PATH=/home/junn1370/personal_assistant/openclaw/openclaw.gcp.json
+Environment=OPENCLAW_STATE_DIR=/home/junn1370/personal_assistant/openclaw/.state
+ExecStart=/home/junn1370/personal_assistant/openclaw/plugins/assistant-bridge/node_modules/.bin/openclaw gateway run --port 18789 --auth none --bind loopback
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
