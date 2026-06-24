@@ -42,9 +42,11 @@ export function createNoteStructureModelClient(
                 "Normalize this raw note into JSON with fields:",
                 "type, title, summary, bullets, reflection, tags, relatedNoteHints, source, createdAt, rawInput, notionPageId.",
                 "Rules:",
+                '- type must be exactly one of: "idea", "note", "task", "research".',
                 '- source must be "llm".',
-                "- createdAt must be a valid ISO timestamp.",
-                "- bullets should contain 2-5 concise strings when possible.",
+                "- createdAt must be a valid ISO 8601 timestamp.",
+                "- bullets must be a JSON array of 2-5 concise strings (never empty).",
+                "- tags and relatedNoteHints must be arrays of strings (use [] if none).",
                 "",
                 rawInput
               ].join("\n")
