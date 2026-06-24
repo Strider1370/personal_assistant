@@ -75,11 +75,10 @@ function normalizeModelDraft(input: unknown): unknown {
     draft.bullets = bullets;
   }
 
-  if (typeof draft.createdAt === "string" && !Number.isNaN(Date.parse(draft.createdAt))) {
-    draft.createdAt = new Date(draft.createdAt).toISOString();
-  } else {
-    draft.createdAt = new Date().toISOString();
-  }
+  // The note is being created now; the model's createdAt is unreliable (it
+  // routinely hallucinates past dates, which then leak into the filename/date
+  // prefix). Always stamp the current time.
+  draft.createdAt = new Date().toISOString();
 
   return draft;
 }
